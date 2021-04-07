@@ -217,7 +217,7 @@ def update_listings(scraped_data: pd.DataFrame, throttle: bool = True):
         if number_of_matches == 0:
             # listing does not exist, add it to unique house listing
             unique_listings_table.insert({
-                'date_posted': scraped_listing.date_posted,
+                'date_posted': str(scraped_listing.date_posted),
                 'post_title': scraped_listing.post_title,
                 'number_bedrooms': scraped_listing.number_bedrooms,
                 'sqft': scraped_listing.sqft,
@@ -230,7 +230,7 @@ def update_listings(scraped_data: pd.DataFrame, throttle: bool = True):
                 sleep(sleep_time)
             price_snapshots_table.insert({
                 'URL': scraped_listing.URL,
-                'timestamp': scraped_listing.date_read,
+                'timestamp': str(scraped_listing.date_read),
                 'price': scraped_listing.price
             })
             print("Inserted {} into database".format(
@@ -242,14 +242,14 @@ def update_listings(scraped_data: pd.DataFrame, throttle: bool = True):
                     price_snapshot.timestamp == scraped_listing.date_read)) == 0:
                 price_snapshots_table.insert({
                     'URL': scraped_listing.URL,
-                    'timestamp': scraped_listing.date_read,
+                    'timestamp': str(scraped_listing.date_read),
                     'price': scraped_listing.price
                 })
                 print("Updated price for {} in database".format(
                     scraped_listing.post_title))
 
 
-def get_gps_coordinates(url: str):
+def get_gps_coordinates(url: str) -> dict:
     # from the URL of a craigslist post, attempt to extract the GPS coordinates
     # returns dictionary of lat and lng if success, otherwise, empty dict
     response = get(url)
@@ -270,7 +270,8 @@ def get_gps_coordinates(url: str):
 
 
 if __name__ == "__main__":
-    scraped_data = get_current_prices(base_url)
+    #scraped_data = get_current_prices(base_url)
+    scraped_data = get_latest_backup()
     scraped_data = clean_data(scraped_data)
     backup_scrape(scraped_data)
     update_listings(scraped_data)
