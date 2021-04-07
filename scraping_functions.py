@@ -19,8 +19,13 @@ from tinydb import TinyDB, Query
 # Then enter the URL here to scrape
 base_url = "https://vancouver.craigslist.org/search/apa?query=-shared+-wanted&hasPic=1&search_distance=4.2&postal=v6r3e9&availabilityMode=0&sale_date=all+dates&max_price=4000"
 
+# set scraping delays
+# minimum delay in seconds
+min_scraping_delay = 1
+# maxinum delay in seconds
+max_scraping_delay = 10
 
-def get_current_prices(base_url: str) -> pd.DataFrame:
+def get_current_prices(base_url: str, throttle: bool = True) -> pd.DataFrame:
     # Scrapes all of the current housing listsings near UBC from Craigslist.
     # Returns a Pandas datatable
     # May include duplicate listings and listings with a price of $0
@@ -58,9 +63,10 @@ def get_current_prices(base_url: str) -> pd.DataFrame:
                        + "&s="  # the parameter for defining the page number
                        + str(page))  # the page number in the pages array from earlier)
 
-        sleep_time = randint(5, 20)
-        print('Waiting {} seconds'.format(sleep_time))
-        sleep(sleep_time)
+        if throttle:
+            sleep_time = randint(min_scraping_delay, max_scraping_delay)
+            print('Waiting {} seconds'.format(sleep_time))
+            sleep(sleep_time)
 
         # throw warning for status codes that are not 200
         if response.status_code != 200:
@@ -167,7 +173,6 @@ def get_current_prices(base_url: str) -> pd.DataFrame:
 
 def backup_scrape(data: pd.DataFrame):
     # Saves Pandas datatable with current datetime in file name
-    data = clean_data(data)
     file_name = './backups/{}.csv'.format(datetime.now())
     data.to_csv(file_name)
     print("Backed up as {}".format(file_name))
@@ -195,7 +200,7 @@ def clean_data(data: pd.DataFrame) -> pd.DataFrame:
     return eb_apts
 
 
-def update_listings(scraped_data: pd.DataFrame):
+def update_listings(scraped_data: pd.DataFrame, throttle: bool = True):
     # update the unique listing of apartments in the database
     # if listing does not exist, add it to the database for the first time and add it's first price
     # if listing does exist, update it's current price
@@ -216,7 +221,12 @@ def update_listings(scraped_data: pd.DataFrame):
                 'number_bedrooms': scraped_listing.number_bedrooms,
                 'sqft': scraped_listing.sqft,
                 'URL': scraped_listing.URL,
+                'coordinates': get_gps_coordinates(scraped_listing.URL)
             })
+            # throttle because we are scraping GPS
+            if throttle:
+                sleep_time = randint(min_scraping_delay, max_scraping_delay)
+                sleep(sleep_time)
             price_snapshots_table.insert({
                 'URL': scraped_listing.URL,
                 'timestamp': scraped_listing.date_read,
@@ -238,7 +248,26 @@ def update_listings(scraped_data: pd.DataFrame):
                     scraped_listing.post_title))
 
 
+def get_gps_coordinates(url: str):
+    # from the URL of a craigslist post, attempt to extract the GPS coordinates
+    # returns dictionary of lat and lng if success, otherwise, empty dict
+    response = get(url)
+    html_soup = BeautifulSoup(response.text, 'html.parser')
+    map_component = html_soup.find('div', {"id": "map"})
+    print("Got GPS coordinates of {}".format(url))
+    if map_component != None:
+        lat = float(map_component.attrs['data-latitude'])
+        lng = float(map_component.attrs['data-longitude'])
+        if lat != None and lng != None:
+            return {'lat': lat, 'lng': lng}
+        else:
+            return {}
+    else:
+        return {}
+
+
 if __name__ == "__main__":
-    #scraped_data = get_current_prices(base_url)
-    scraped_data = get_latest_backup()
+    scraped_data = get_current_prices(base_url)
+    scraped_data = clean_data(scraped_data)
+    backup_scrape(scraped_data)
     update_listings(scraped_data)
