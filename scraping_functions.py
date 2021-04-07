@@ -1,4 +1,3 @@
-#build out the loop
 from time import sleep
 import re
 from random import randint #avoid throttling by not sending too many requests one after the other
@@ -11,15 +10,20 @@ from requests import get
 import pandas as pd
 from datetime import datetime
 import glob
-import os
+import 
+
+# Base URL
+# Go to craigslist, set up a search for the apartments you want (price, location, pictures, keywords)
+# Then enter the URL here to scrape
+base_url = "https://vancouver.craigslist.org/search/apa?query=-shared+-wanted&hasPic=1&search_distance=4.2&postal=v6r3e9&availabilityMode=0&sale_date=all+dates&max_price=4000"
 
 # Scrapes all of the current housing listsings near UBC from Craigslist.
 # Returns a Pandas datatable
 # May include duplicate listings and listings with a price of $0
 # Does not include posts wit hthe keyboards "shared" or "wanted" in the title
-def get_current_prices() -> pd.DataFrame:
+def get_current_prices(base_url: StopIteration) -> pd.DataFrame:
     #get the first page of housing prices
-    response = get('https://vancouver.craigslist.org/search/apa?query=-shared+-wanted&hasPic=1&search_distance=4.2&postal=v6r3e9&availabilityMode=0&sale_date=all+dates')
+    response = get(base_url)
     html_soup = BeautifulSoup(response.text, 'html.parser')
 
     #get the macro-container for the housing posts
@@ -45,10 +49,9 @@ def get_current_prices() -> pd.DataFrame:
         print('Scraping page {}'.format(page))
 
         #get request
-        response = get("https://vancouver.craigslist.org/search/apa?"
-                    + "s=" #the parameter for defining the page number 
-                    + str(page) #the page number in the pages array from earlier
-                    + "query=-shared+-wanted&hasPic=1&search_distance=4.2&postal=v6r3e9&availabilityMode=0&sale_date=all+dates&max_price=4000")
+        response = get(base_url
+                    + "&s=" #the parameter for defining the page number 
+                    + str(page) #the page number in the pages array from earlier)
 
         sleep_time = randint(5,20)
         print('Waiting {} seconds'.format(sleep_time))
@@ -174,6 +177,6 @@ def clean_data(data: pd.DataFrame) -> pd.DataFrame:
     return eb_apts
 
 if __name__ == "__main__":
-    #scraped_data = get_current_prices()
+    scraped_data = get_current_prices(base_url)
     scraped_data = get_latest_backup()
     scraped_data = clean_data(scraped_data)
