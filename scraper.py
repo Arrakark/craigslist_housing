@@ -21,9 +21,9 @@ base_url = "https://vancouver.craigslist.org/search/apa?query=-shared+-wanted&ha
 
 # set scraping delays
 # minimum delay in seconds
-min_scraping_delay = 1
+min_scraping_delay = 2
 # maxinum delay in seconds
-max_scraping_delay = 9
+max_scraping_delay = 8
 
 
 def get_current_prices(base_url: str, throttle: bool = True) -> pd.DataFrame:
@@ -216,13 +216,15 @@ def update_listings(scraped_data: pd.DataFrame, throttle: bool = True):
             listing.URL == scraped_listing.URL))
         if number_of_matches == 0:
             # listing does not exist, add it to unique house listing
+            page = get_listing_page(scraped_listing.URL)
             unique_listings_table.insert({
                 'date_posted': str(scraped_listing.date_posted),
                 'post_title': scraped_listing.post_title,
                 'number_bedrooms': scraped_listing.number_bedrooms,
                 'sqft': scraped_listing.sqft,
                 'URL': scraped_listing.URL,
-                'coordinates': get_gps_coordinates(scraped_listing.URL)
+                'page_html': page,
+                'coordinates': get_gps_coordinates(page)
             })
             # throttle because we are scraping GPS
             if throttle:
@@ -249,11 +251,15 @@ def update_listings(scraped_data: pd.DataFrame, throttle: bool = True):
                     scraped_listing.post_title))
 
 
-def get_gps_coordinates(url: str) -> dict:
-    # from the URL of a craigslist post, attempt to extract the GPS coordinates
-    # returns dictionary of lat and lng if success, otherwise, empty dict
+def get_listing_page(url: str) -> str:
+    # from the URL of a craigslist post, get the listing page
     response = get(url)
-    html_soup = BeautifulSoup(response.text, 'html.parser')
+    return response.text
+
+def get_gps_coordinates(page: str) -> dict:
+    # from the page HTMl content of a craigslist post, attempt to extract the GPS coordinates
+    # returns dictionary of lat and lng if success, otherwise, empty dict
+    html_soup = BeautifulSoup(page, 'html.parser')
     map_component = html_soup.find('div', {"id": "map"})
     if map_component != None:
         lat = float(map_component.attrs['data-latitude'])
@@ -271,6 +277,7 @@ def get_gps_coordinates(url: str) -> dict:
 
 if __name__ == "__main__":
     scraped_data = get_current_prices(base_url)
+    #scraped_data = get_latest_backup()
     scraped_data = clean_data(scraped_data)
     backup_scrape(scraped_data)
     update_listings(scraped_data)
