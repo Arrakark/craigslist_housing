@@ -162,7 +162,18 @@ def get_latest_backup() -> pd.DataFrame:
     print('Getting latest backup {}'.format(latest_file))
     return pd.read_csv(latest_file)
 
+# Cleans scraped data by removing listings with <$500/mo and duplicate URLs 
+# (not sure how one does duplicate URLs on craigslist but whatever)
+# takes in DataTable and returns clean one
+def clean_data(data: pd.DataFrame) -> pd.DataFrame:
+    eb_apts = data.drop_duplicates(subset='URL')
+    eb_apts = eb_apts.drop(eb_apts[eb_apts['price'] < 500].index)
+    eb_apts['number_bedrooms'] = eb_apts['number_bedrooms'].apply(lambda x: float(x))
+    from datetime import datetime
+    eb_apts['date_posted'] = pd.to_datetime(eb_apts['date_posted'])
+    return eb_apts
+
 if __name__ == "__main__":
     #scraped_data = get_current_prices()
-    backup_scrape(scraped_data)
-    #scraped_data = get_latest_backup()
+    scraped_data = get_latest_backup()
+    scraped_data = clean_data(scraped_data)
