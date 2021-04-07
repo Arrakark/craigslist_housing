@@ -10,7 +10,7 @@ from requests import get
 import pandas as pd
 from datetime import datetime
 import glob
-import 
+import os
 
 # Base URL
 # Go to craigslist, set up a search for the apartments you want (price, location, pictures, keywords)
@@ -21,7 +21,7 @@ base_url = "https://vancouver.craigslist.org/search/apa?query=-shared+-wanted&ha
 # Returns a Pandas datatable
 # May include duplicate listings and listings with a price of $0
 # Does not include posts wit hthe keyboards "shared" or "wanted" in the title
-def get_current_prices(base_url: StopIteration) -> pd.DataFrame:
+def get_current_prices(base_url: str) -> pd.DataFrame:
     #get the first page of housing prices
     response = get(base_url)
     html_soup = BeautifulSoup(response.text, 'html.parser')
@@ -51,7 +51,7 @@ def get_current_prices(base_url: StopIteration) -> pd.DataFrame:
         #get request
         response = get(base_url
                     + "&s=" #the parameter for defining the page number 
-                    + str(page) #the page number in the pages array from earlier)
+                    + str(page)) #the page number in the pages array from earlier)
 
         sleep_time = randint(5,20)
         print('Waiting {} seconds'.format(sleep_time))
