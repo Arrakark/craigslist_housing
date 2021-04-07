@@ -23,7 +23,7 @@ base_url = "https://vancouver.craigslist.org/search/apa?query=-shared+-wanted&ha
 # minimum delay in seconds
 min_scraping_delay = 1
 # maxinum delay in seconds
-max_scraping_delay = 10
+max_scraping_delay = 9
 
 def get_current_prices(base_url: str, throttle: bool = True) -> pd.DataFrame:
     # Scrapes all of the current housing listsings near UBC from Craigslist.
@@ -261,8 +261,10 @@ def get_gps_coordinates(url: str):
         if lat != None and lng != None:
             return {'lat': lat, 'lng': lng}
         else:
+            print("Could not parse GPS coordinates of {}".format(url))
             return {}
     else:
+        print("Could not find GPS coordinates of {}".format(url))
         return {}
 
 
