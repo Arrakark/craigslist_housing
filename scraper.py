@@ -256,6 +256,7 @@ def get_listing_page(url: str) -> str:
     response = get(url)
     return response.text
 
+
 def get_gps_coordinates(page: str) -> dict:
     # from the page HTMl content of a craigslist post, attempt to extract the GPS coordinates
     # returns dictionary of lat and lng if success, otherwise, empty dict
@@ -265,13 +266,13 @@ def get_gps_coordinates(page: str) -> dict:
         lat = float(map_component.attrs['data-latitude'])
         lng = float(map_component.attrs['data-longitude'])
         if lat != None and lng != None:
-            print("Got GPS coordinates of {}".format(url))
+            print("Got GPS coordinates")
             return {'lat': lat, 'lng': lng}
         else:
-            print("Could not parse GPS coordinates of {}".format(url))
+            print("Could not parse GPS coordinates")
             return {}
     else:
-        print("Could not find GPS coordinates of {}".format(url))
+        print("Could not find GPS coordinates")
         return {}
 
 
