@@ -25,6 +25,7 @@ min_scraping_delay = 1
 # maxinum delay in seconds
 max_scraping_delay = 9
 
+
 def get_current_prices(base_url: str, throttle: bool = True) -> pd.DataFrame:
     # Scrapes all of the current housing listsings near UBC from Craigslist.
     # Returns a Pandas datatable
