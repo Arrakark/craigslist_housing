@@ -163,5 +163,6 @@ def get_latest_backup() -> pd.DataFrame:
     return pd.read_csv(latest_file)
 
 if __name__ == "__main__":
-    scraped_data = get_current_prices()
+    #scraped_data = get_current_prices()
     backup_scrape(scraped_data)
+    #scraped_data = get_latest_backup()
