@@ -144,3 +144,6 @@ cython_debug/
 
 #backup files
 *.csv
+
+#vscode settings
+settings.json
