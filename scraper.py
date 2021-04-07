@@ -270,8 +270,7 @@ def get_gps_coordinates(url: str) -> dict:
 
 
 if __name__ == "__main__":
-    #scraped_data = get_current_prices(base_url)
-    scraped_data = get_latest_backup()
+    scraped_data = get_current_prices(base_url)
     scraped_data = clean_data(scraped_data)
     backup_scrape(scraped_data)
     update_listings(scraped_data)
