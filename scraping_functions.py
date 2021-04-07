@@ -255,11 +255,11 @@ def get_gps_coordinates(url: str):
     response = get(url)
     html_soup = BeautifulSoup(response.text, 'html.parser')
     map_component = html_soup.find('div', {"id": "map"})
-    print("Got GPS coordinates of {}".format(url))
     if map_component != None:
         lat = float(map_component.attrs['data-latitude'])
         lng = float(map_component.attrs['data-longitude'])
         if lat != None and lng != None:
+            print("Got GPS coordinates of {}".format(url))
             return {'lat': lat, 'lng': lng}
         else:
             print("Could not parse GPS coordinates of {}".format(url))
