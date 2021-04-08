@@ -147,6 +147,7 @@ cython_debug/
 listings.json
 db/
 backups/
+*.sh
 
 #vscode settings
 settings.json
