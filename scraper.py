@@ -13,6 +13,7 @@ from datetime import datetime
 import glob
 import os
 from tinydb import TinyDB, Query
+from tinydb.operations import add
 
 # Base URL
 # Go to craigslist, set up a search for the apartments you want (price, location, pictures, keywords)
@@ -21,9 +22,9 @@ base_url = "https://vancouver.craigslist.org/search/apa?query=-shared+-wanted&ha
 
 # set scraping delays
 # minimum delay in seconds
-min_scraping_delay = 2
+min_scraping_delay = 5
 # maxinum delay in seconds
-max_scraping_delay = 8
+max_scraping_delay = 15
 
 
 def get_current_prices(base_url: str, throttle: bool = True) -> pd.DataFrame:
@@ -206,49 +207,41 @@ def update_listings(scraped_data: pd.DataFrame, throttle: bool = True):
     # if listing does not exist, add it to the database for the first time and add it's first price
     # if listing does exist, update it's current price
     db = TinyDB('./db/listings.json')
-    unique_listings_table = db.table('unique_listings')
-    price_snapshots_table = db.table('prices')
+    listings = db.table('listings')
     listing = Query()
-    price_snapshot = Query()
     for scraped_listing in scraped_data.itertuples():
-        # for each listing, see if it's in the
-        number_of_matches: int = len(unique_listings_table.search(
-            listing.URL == scraped_listing.URL))
-        if number_of_matches == 0:
+        # for each listing, see if it's in the database
+        if listings.contains(listing.URL == scraped_listing.URL) == False:
             # listing does not exist, add it to unique house listing
             page = get_listing_page(scraped_listing.URL)
-            unique_listings_table.insert({
+            listings.insert({
                 'date_posted': str(scraped_listing.date_posted),
                 'post_title': scraped_listing.post_title,
                 'number_bedrooms': scraped_listing.number_bedrooms,
                 'sqft': scraped_listing.sqft,
                 'URL': scraped_listing.URL,
                 'page_html': page,
-                'coordinates': get_gps_coordinates(page)
+                'coordinates': get_gps_coordinates(page),
+                'snapshots': [{
+                    'timestamp': str(scraped_listing.date_read),
+                    'price': scraped_listing.price
+                }]
             })
             # throttle because we are scraping GPS
             if throttle:
                 sleep_time = randint(min_scraping_delay, max_scraping_delay)
                 sleep(sleep_time)
-            price_snapshots_table.insert({
-                'URL': scraped_listing.URL,
-                'timestamp': str(scraped_listing.date_read),
-                'price': scraped_listing.price
-            })
             print("Inserted {} into database".format(
                 scraped_listing.post_title))
         else:
             # listing already exists, update it's last-seen time and last price
-            if len(price_snapshots_table.search(
-                    price_snapshot.URL == scraped_listing.URL and
-                    price_snapshot.timestamp == scraped_listing.date_read)) == 0:
-                price_snapshots_table.insert({
-                    'URL': scraped_listing.URL,
-                    'timestamp': str(scraped_listing.date_read),
-                    'price': scraped_listing.price
-                })
-                print("Updated price for {} in database".format(
-                    scraped_listing.post_title))
+            listings.update(add('snapshots', [{
+                'timestamp': str(scraped_listing.date_read),
+                'price': scraped_listing.price
+            }]),
+                listing.URL == scraped_listing.URL)
+            print("Updated price for {} in database".format(
+                scraped_listing.post_title))
 
 
 def get_listing_page(url: str) -> str:
