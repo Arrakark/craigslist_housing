@@ -154,3 +154,6 @@ settings.json
 
 #scripts
 download_db.sh
+
+#output_files
+*.pdf
