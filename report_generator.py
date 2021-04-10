@@ -17,19 +17,36 @@ def drop_prefix(self, prefix):
 pd.core.frame.DataFrame.drop_prefix = drop_prefix
 
 def generate_graph_price_listings(listings: pd.DataFrame):
-    prices = listings.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
+    listings_1_br = filter_1_br(listings)
+    prices = listings_1_br.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
     prices_aggregate = prices.agg([np.mean, np.std]).transpose()
     #prices_aggregate.plot(kind = "line", y = "mean", legend = False, capsize=4, title = "Average Rental Prices", yerr = "std", color="#ADD8E6")
     prices_aggregate.plot(kind = "line", y = "mean", legend = False, title = "Average Rental Prices", color="#ADD8E6")
     plt.xlabel("Date")
-    plt.ylabel("Price (CAD) of Active Listings")
+    plt.ylabel("Price (CAD) of 1-bedroom Active Listings")
 
 def generate_graph_num_listings(listings: pd.DataFrame):
-    prices = listings.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
+    listings_1_br = filter_1_br(listings)
+    prices = listings_1_br.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
     postings = prices.count()
     postings.plot(kind = "line",title = "Number of Active Listings", color="#ADD8E6")
     plt.xlabel("Date")
-    plt.ylabel("Number of Active Listings")
+    plt.ylabel("Number of Active 1-bedroom Listings")
+
+
+def generate_graph_new_removed_listings(listings: pd.DataFrame):
+    prices = listings.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
+    dates = []
+    number_removed = []
+    number_added = []
+    for ind_col, column in enumerate(prices.columns):
+        if ind_col == 0:
+            break
+        for ind_row, row in enumerate(prices.index):
+            prices[ind]
+    postings.plot(kind = "line",title = "Number of Active Listings", color="#ADD8E6")
+    plt.xlabel("Date")
+    plt.ylabel("Number of Added or Removed Listings")
 
 def get_first_seen(listings: pd.DataFrame):
     #returns the first time any posting has been recorded
@@ -46,7 +63,8 @@ def modify_listings(listings: pd.DataFrame):
     first_seen_date = get_first_seen(listings)
     last_seen_date = get_last_seen(listings)
     prices = listings.apply(lambda row: get_price_on_each_day(row, first_seen_date, last_seen_date), axis=1)
-    return listings.join(prices, lsuffix='_caller', rsuffix='_other')
+    listings = listings.join(prices, lsuffix='_caller', rsuffix='_other')
+    return listings
 
 def daterange(start_date, end_date):
     for n in range(int((end_date - start_date).days)+1):
@@ -86,6 +104,9 @@ def save_and_close(pdf):
     pdf.savefig()
     plt.close()
 
+def filter_1_br(listings):
+    return listings[listings['number_bedrooms'] == 1.0]
+
 
 if __name__ == "__main__":
     #update_database()
@@ -97,3 +118,5 @@ if __name__ == "__main__":
         save_and_close(pdf)
         generate_graph_price_listings(data)
         save_and_close(pdf)
+        #generate_graph_new_removed_listings(data)
+        #save_and_close(pdf)
