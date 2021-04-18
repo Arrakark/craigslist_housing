@@ -16,26 +16,75 @@ def drop_prefix(self, prefix):
 
 pd.core.frame.DataFrame.drop_prefix = drop_prefix
 
-def generate_graph_price_listings(listings: pd.DataFrame):
-    listings_1_br = filter_1_br(listings)
-    prices = listings_1_br.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
+def generate_graph_correlation(listings):
+    plt.figure(figsize=(12, 8))
+    sns.regplot(x='price', y='sqft', data=listings.dropna());
+    plt.title('Price vs. Square Footage Regression Plot');
+    plt.xlabel("Price (CAD)");
+    plt.ylabel("Square Feet");
+
+def generate_table_corr(listings):
+    listings_without_snapshots = listings[listings.columns.drop(list(listings.filter(regex='snapshot_date_')))]
+    listings_without_snapshots = listings_without_snapshots.dropna()
+    generate_table(listings_without_snapshots.corr().round(2))
+
+def generate_table(data):
+    fig, ax = plt.subplots()
+    table = pd.plotting.table(ax, data, rowLabels=None, colLabels=None)
+    table.set_fontsize(14)
+    table.scale(1,4)
+    ax.axis('off')
+
+def add_latest_prices(listings):
+    prices = listings.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
+    latest_prices = prices.iloc[:, -1]
+    latest_prices.name = "price"
+    return listings.join(latest_prices)
+
+def generate_graph_latest_distribution_of_prices(listings):
+    plt.figure()
+    binwidth = 100
+    y = listings['price']
+    plt.hist(y, edgecolor='black', bins=range(int(y.min()), int(y.max() + binwidth), binwidth));
+    plt.xlabel("Price")
+    plt.ylabel('Count')
+    plt.title("Latest Distribution of Prices");
+
+def price_per_square_foot(listings):
+    params = {'legend.fontsize': 'x-large',
+          'figure.figsize': (15, 5),
+         'axes.labelsize': 'x-large',
+         'axes.titlesize':'x-large',
+         'xtick.labelsize':'x-large',
+         'ytick.labelsize':'x-large'}
+    pylab.rcParams.update(params)
+
+    plt.figure(figsize=(12, 8))
+    sns.scatterplot(x='price', y='sqft', hue='number_bedrooms', palette='summer', x_jitter=True, y_jitter=True, s=125, data=listings.dropna())
+    plt.legend(fontsize=12)
+    plt.xlabel("Price", fontsize=18)
+    plt.ylabel("Square Footage", fontsize=18);
+    plt.title("Price vs. Square Footage Colored by Number of Bedrooms", fontsize=18);
+
+def generate_graph_price_listings(listings: pd.DataFrame, show_std=False):
+    prices = listings.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
     prices_aggregate = prices.agg([np.mean, np.std]).transpose()
-    #prices_aggregate.plot(kind = "line", y = "mean", legend = False, capsize=4, title = "Average Rental Prices", yerr = "std", color="#ADD8E6")
-    prices_aggregate.plot(kind = "line", y = "mean", legend = False, title = "Average Rental Prices")
+    if show_std is True: 
+        prices_aggregate.plot(kind = "line", y = "mean", legend = False, capsize=4, title = "Average Rental Prices", yerr = "std", color="#ADD8E6")
+    else:
+        prices_aggregate.plot(kind = "line", y = "mean", legend = False, title = "Average Rental Prices")
     plt.xlabel("Date")
-    plt.ylabel("Price (CAD) of 1-bedroom Active Listings")
+    plt.ylabel("Price (CAD) of Active Listings")
 
 def generate_graph_num_listings(listings: pd.DataFrame):
-    listings_1_br = filter_1_br(listings)
-    prices = listings_1_br.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
+    prices = listings.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
     postings = prices.count()
     postings.plot(kind = "line",title = "Number of Active Listings")
     plt.xlabel("Date")
-    plt.ylabel("Number of Active 1-bedroom Listings")
+    plt.ylabel("Number of Active Listings")
 
 
 def generate_graph_new_removed_listings(listings: pd.DataFrame):
-    listings = filter_1_br(listings)
     prices = listings.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
     start_date = get_first_seen(listings) + timedelta(1)
     end_date = get_last_seen(listings)
@@ -54,14 +103,13 @@ def generate_graph_new_removed_listings(listings: pd.DataFrame):
     prices = prices.apply(pd.value_counts)
     prices = prices.drop(0)
     prices = prices.transpose()
-    prices.columns = ["Added 1br Listings", "Removed 1br Listings"]
+    prices.columns = ["Added Listings", "Removed Listings"]
     prices.plot(kind = "bar",title = "Number of Listings Added/Removed")
     plt.xlabel("Date")
     plt.ylabel("Change in Number Listings")
 
 
 def generate_graph_new_removed_listings_price(listings: pd.DataFrame):
-    listings = filter_1_br(listings)
     prices = listings.filter(regex='snapshot_date_').drop_prefix('snapshot_date_')
     start_date = get_first_seen(listings) + timedelta(1)
     end_date = get_last_seen(listings)
@@ -81,7 +129,7 @@ def generate_graph_new_removed_listings_price(listings: pd.DataFrame):
     prices_added = prices.where(lambda x: (x > 0)).mean()
     prices_removed = prices.where(lambda x: (x < 0)).mean() * -1
     prices = pd.concat([prices_added, prices_removed], axis=1)
-    prices.columns = ["Added 1br Listings", "Removed 1br Listings"]
+    prices.columns = ["Added Listings", "Removed Listings"]
     prices.plot(kind = "bar",title = "Average Price of Listings Added/Removed")
     plt.xlabel("Date")
     plt.ylabel("Average Price of Added/Removed Listings")
@@ -102,6 +150,7 @@ def modify_listings(listings: pd.DataFrame):
     last_seen_date = get_last_seen(listings)
     prices = listings.apply(lambda row: get_price_on_each_day(row, first_seen_date, last_seen_date), axis=1)
     listings = listings.join(prices, lsuffix='_caller', rsuffix='_other')
+    listings = add_latest_prices(listings)
     return listings
 
 def daterange(start_date, end_date):
@@ -151,13 +200,23 @@ if __name__ == "__main__":
     #update_database()
     data = get_dataframe()
     data = modify_listings(data)
+    #data = filter_1_br(data)
 
     with PdfPages('craigslist_rental_report.pdf') as pdf:
         generate_graph_num_listings(data)
         save_and_close(pdf)
-        generate_graph_price_listings(data)
+        generate_graph_price_listings(data, show_std=False)
         save_and_close(pdf)
         generate_graph_new_removed_listings(data)
         save_and_close(pdf)
         generate_graph_new_removed_listings_price(data)
         save_and_close(pdf)
+        generate_graph_latest_distribution_of_prices(data)
+        save_and_close(pdf)
+        price_per_square_foot(data)
+        save_and_close(pdf)
+        generate_graph_correlation(data)
+        save_and_close(pdf)
+        generate_table_corr(data)
+        save_and_close(pdf)
+
