@@ -18,7 +18,7 @@ pd.core.frame.DataFrame.drop_prefix = drop_prefix
 
 def generate_graph_correlation(listings, title=""):
     #plt.figure(figsize=(12, 8))
-    sns.regplot(x='sqft', y='price', data=listings.dropna());
+    sns.regplot(x='sqft', y='price', data=listings);
     plt.title(title);
     plt.ylabel("Price (CAD)");
     plt.xlabel("Square Feet");
@@ -51,7 +51,7 @@ def generate_graph_latest_distribution_of_prices(listings, title=""):
     plt.title(title);
 
 def price_per_square_foot(listings, title=""):
-    sns.scatterplot(x='sqft', y='price', hue='number_bedrooms', palette='summer', x_jitter=True, y_jitter=True, s=125, data=listings.dropna())
+    sns.scatterplot(x='sqft', y='price', hue='number_bedrooms', palette='summer', x_jitter=True, y_jitter=True, s=125, data=listings)
     plt.ylabel("Price")
     plt.xlabel("Square Footage");
     plt.title(title)
@@ -214,12 +214,12 @@ if __name__ == "__main__":
         save_and_close(pdf)
         generate_graph_latest_distribution_of_prices(data, title="Latest Distribution of Prices")
         save_and_close(pdf)
-        price_per_square_foot(data, title="Square Footage  vs. Price Colored by Number of Bedrooms")
+        price_per_square_foot(data, title="Square Footage vs. Price Colored by Number of Bedrooms")
         save_and_close(pdf)
         generate_graph_correlation(data, title='Square Footage vs. Price Regression Plot')
         save_and_close(pdf)
-        #generate_table_corr(data)
-        #save_and_close(pdf)
+        generate_table_corr(data)
+        save_and_close(pdf)
 
         #do the same thing but with 1br data and with propper labels
         data = filter_1_br(data)
@@ -240,6 +240,6 @@ if __name__ == "__main__":
         save_and_close(pdf)
         generate_graph_correlation(data, title='Square Footage vs. Price Regression Plot for 1br')
         save_and_close(pdf)
-        #generate_table_corr(data)
-        #save_and_close(pdf)
+        generate_table_corr(data)
+        save_and_close(pdf)
 
