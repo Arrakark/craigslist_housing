@@ -138,7 +138,7 @@ dmypy.json
 cython_debug/
 
 #image exports
-*.png
+#*.png disabled for examples
 *.svg
 *.jpg
 
