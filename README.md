@@ -12,7 +12,7 @@ There are two main scripts in this repository. **scraper.py** and **report_gener
 
 ![Average rental prices](/examples/ex2.png)
 
-![1 br price discributions](/examples/ex3.png)
+![1 br price distributions](/examples/ex3.png)
 
 ![Price Regression](/examples/ex4.png)
 
@@ -20,7 +20,7 @@ There are two main scripts in this repository. **scraper.py** and **report_gener
 
 ![Prices of added/removed postings](/examples/ex6.png)
 
-You can use the information generated in the report to make better educated desisions when looking for a place to rent. You can also write you own script that loads the tinydb data into a Dataframe, and run your own custom analysis. See **test.py** for an example of that.
+You can use the information generated in the report to make better educated decisions when looking for a place to rent. You can also write you own script that loads the tinydb data into a Dataframe, and run your own custom analysis. See **test.py** for an example of that.
 
 ## How do I set this up to run if I have a server?
 If you have a server that can run Python (I assume you are a normal person and run some sort of Linux distro on your server), then you can run the scraper on your server, and run the report generator on your computer.
@@ -36,12 +36,12 @@ scp vlad@srv1:/home/vlad/craigslist_housing/db/listings.json ./db/listings.json`
 7. When you want a report, simply run **report_generator.py** on your local machine and look at **craigslist_rental_report.pdf** generated in the main directory
 
 ## How do I set this up to run if I don't have a server?
-If you don't have a server, that's ok. You just need to remember to run the script **scraper.py** regularely on your computer. Set it up to run automatically somehow, and make sure your computer is on during that time. 
+If you don't have a server, that's ok. You just need to remember to run the script **scraper.py** regularly on your computer. Set it up to run automatically somehow, and make sure your computer is on during that time. 
 
 1. Clone repo on your your local machine
 2. Go to Craigslist housing, and set up a search query that includes a postal code location.
 3. Copy the URL from the search query and insert it on line 21 in **scraper.py**
-4. Run **scraper.py** regulately on your computer somehow; I suggest once a day
+4. Run **scraper.py** regularly on your computer somehow; I suggest once a day
 5. When you want a report, simply run **report_generator.py** on your local machine and look at **craigslist_rental_report.pdf** generated in the main directory
 
 ## Credits
